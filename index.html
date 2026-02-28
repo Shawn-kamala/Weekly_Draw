@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weekly Draw</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #08080f;
+      --surface: #111118;
+      --card: #18181f;
+      --accent: #f5c842;
+      --accent2: #e8506a;
+      --text: #eeeeee;
+      --muted: #666680;
+      --border: #252535;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 44px 20px 100px;
+      background-image:
+        radial-gradient(ellipse at 15% 15%, rgba(245,200,66,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 85%, rgba(232,80,106,0.07) 0%, transparent 55%);
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3rem, 9vw, 6.5rem);
+      letter-spacing: 0.06em;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 8px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Mystery label ── */
+    .mystery-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 0.2em;
+      color: var(--accent2);
+      text-align: center;
+      margin-bottom: 36px;
+      opacity: 0.75;
+    }
+
+    /* ── Progress ── */
+    .progress-wrap {
+      width: 100%;
+      max-width: 520px;
+      margin-bottom: 28px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .progress-label span:last-child { color: var(--accent); font-weight: 600; }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: var(--card);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 99px;
+      transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* ── Main card ── */
+    .main-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 38px;
+      width: 100%;
+      max-width: 520px;
+      margin-bottom: 32px;
+      transition: opacity 0.4s, filter 0.4s;
+    }
+
+    .main-card.locked {
+      opacity: 0.3;
+      filter: grayscale(0.6);
+      pointer-events: none;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    label.field-label {
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    input[type="text"] {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 14px 18px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    input[type="text"]:focus { border-color: var(--accent); }
+
+    /* ── Mystery slots grid ── */
+    .slots-label {
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .mystery-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 26px;
+    }
+
+    /* Each slot looks like a sealed envelope / mystery box */
+    .slot-btn {
+      aspect-ratio: 1;
+      border: 2px solid var(--border);
+      border-radius: 13px;
+      background: var(--card);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slot-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(245,200,66,0.04), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .slot-btn:hover:not(.taken) {
+      border-color: var(--accent);
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 6px 20px rgba(245,200,66,0.15);
+    }
+
+    .slot-btn:hover:not(.taken)::before { opacity: 1; }
+
+    /* Taken slot — show a sealed/crossed state */
+    .slot-btn.taken {
+      background: #0c0c15;
+      border-color: #1c1c2a;
+      cursor: not-allowed;
+      transform: none !important;
+      font-size: 1.1rem;
+      color: #2a2a40;
+    }
+
+    .slot-btn.taken::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 5px,
+        rgba(255,255,255,0.02) 5px,
+        rgba(255,255,255,0.02) 6px
+      );
+    }
+
+    /* Flash animation when a slot is claimed */
+    @keyframes claimFlash {
+      0%   { box-shadow: 0 0 0 0 rgba(245,200,66,0.6); }
+      50%  { box-shadow: 0 0 0 12px rgba(245,200,66,0); }
+      100% { box-shadow: 0 0 0 0 rgba(245,200,66,0); }
+    }
+
+    .slot-btn.just-claimed {
+      animation: claimFlash 0.5s ease forwards;
+    }
+
+    .claim-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      border: none;
+      border-radius: 13px;
+      color: #080808;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.35rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .claim-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .claim-btn:active { transform: translateY(0); }
+
+    .error-msg {
+      color: var(--accent2);
+      font-size: 0.85rem;
+      margin-top: -18px;
+      margin-bottom: 10px;
+      min-height: 20px;
+    }
+
+    /* ── Toast notification ── */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 50px;
+      padding: 12px 28px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s;
+      opacity: 0;
+      z-index: 999;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* ── Waiting banner ── */
+    .waiting-banner {
+      width: 100%;
+      max-width: 520px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 18px;
+      padding: 30px 32px;
+      text-align: center;
+      margin-bottom: 40px;
+      display: none;
+    }
+
+    .waiting-banner.visible { display: block; }
+
+    .waiting-banner p { color: var(--muted); font-size: 0.95rem; line-height: 1.8; }
+    .waiting-banner strong { color: var(--accent); }
+
+    /* ── Results ── */
+    .results-section {
+      width: 100%;
+      max-width: 520px;
+      display: none;
+    }
+
+    .results-section.visible { display: block; }
+
+    .fanfare {
+      text-align: center;
+      margin-bottom: 30px;
+      animation: bigPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes bigPop {
+      from { transform: scale(0.5); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .fanfare-emoji { font-size: 3rem; display: block; margin-bottom: 6px; }
+
+    .fanfare-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.8rem;
+      letter-spacing: 0.07em;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .fanfare-sub { color: var(--muted); font-size: 0.88rem; margin-top: 6px; }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .results-header h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+    }
+
+    .reset-btn {
+      padding: 8px 20px;
+      border: 2px solid var(--accent2);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--accent2);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .reset-btn:hover { background: var(--accent2); color: #fff; }
+
+    .entries-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .entry-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      opacity: 0;
+      animation: slideUp 0.45s ease forwards;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .entry-name { font-size: 1rem; font-weight: 600; }
+
+    .entry-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Weekly Draw</h1>
+  <p>Enter your name · Pick a sealed slot · No one knows their number until all 10 are claimed</p>
+</header>
+<div class="mystery-label">🔒 Numbers are hidden until the draw is complete</div>
+
+<!-- Progress -->
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span>Slots claimed</span>
+    <span id="progressText">0 / 10</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+</div>
+
+<!-- Entry form -->
+<div class="main-card" id="mainCard">
+  <div class="input-group">
+    <label class="field-label" for="nameInput">Your Name</label>
+    <input type="text" id="nameInput" placeholder="e.g. Atara" maxlength="40"/>
+  </div>
+
+  <div class="slots-label">Choose a Mystery Slot — your number is hidden inside!</div>
+  <div class="mystery-grid" id="mysteryGrid"></div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <button class="claim-btn" onclick="addEntry()">🎲 Claim My Slot</button>
+</div>
+
+<!-- Waiting -->
+<div class="waiting-banner" id="waitingBanner">
+  <p>🔒 Numbers are locked away until everyone has picked…<br/>
+  <strong id="waitingCount">0 of 10</strong> slots have been claimed.<br/>
+  <span style="font-size:0.82rem;opacity:0.7;">The big reveal happens when all 10 are taken!</span></p>
+</div>
+
+<!-- Results -->
+<div class="results-section" id="resultsSection">
+  <div class="fanfare">
+    <span class="fanfare-emoji">🎉</span>
+    <div class="fanfare-title">The Big Reveal!</div>
+    <div class="fanfare-sub">All 10 slots claimed — here's what everyone got</div>
+  </div>
+  <div class="results-header">
+    <h2>Final Numbers</h2>
+    <button class="reset-btn" onclick="resetAll()">Reset &amp; Play Again</button>
+  </div>
+  <div class="entries-list" id="entriesList"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const TOTAL = 10;
+
+  // Pool of available numbers, shuffled — users never see these
+  let availableNumbers = [];
+  let entries = [];
+  let takenSlots = new Set();   // which slot indices (0-9) are claimed
+  let selectedSlot = null;      // index of the slot the user clicked
+
+  function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function initPool() {
+    availableNumbers = shuffleArray([1,2,3,4,5,6,7,8,9,10]);
+  }
+
+  initPool();
+
+  // ── Build mystery slot grid ──────────────────────────────────────
+  const grid = document.getElementById('mysteryGrid');
+
+  function buildGrid() {
+    grid.innerHTML = '';
+    for (let i = 0; i < TOTAL; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'slot-btn';
+      btn.innerHTML = '🎁';          // all slots look identical — sealed boxes
+      btn.dataset.slot = i;
+      btn.title = 'Mystery slot — click to claim!';
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('taken')) return;
+        selectSlot(i, btn);
+      });
+      grid.appendChild(btn);
+    }
+  }
+
+  buildGrid();
+
+  function selectSlot(idx, btn) {
+    // Deselect previously selected slot (if not taken)
+    document.querySelectorAll('.slot-btn:not(.taken)').forEach(b => {
+      b.style.borderColor = '';
+      b.style.boxShadow  = '';
+      b.innerHTML = '🎁';
+    });
+
+    selectedSlot = idx;
+    btn.innerHTML = '✨';
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.boxShadow   = '0 0 14px rgba(245,200,66,0.25)';
+    clearError();
+  }
+
+  // ── Add entry ────────────────────────────────────────────────────
+  function addEntry() {
+    const nameInput = document.getElementById('nameInput');
+    const name = nameInput.value.trim();
+
+    if (!name) { showError('Please enter your name.'); return; }
+    if (selectedSlot === null) { showError('Please click a mystery slot to claim it.'); return; }
+    if (entries.find(e => e.name.toLowerCase() === name.toLowerCase())) {
+      showError('This name has already been added.'); return;
+    }
+    if (takenSlots.has(selectedSlot)) {
+      showError('That slot is already taken — pick another one!'); return;
+    }
+
+    // Secretly assign the next random number from the shuffled pool
+    const assignedNumber = availableNumbers[takenSlots.size];
+
+    entries.push({ name, number: assignedNumber, slot: selectedSlot });
+    takenSlots.add(selectedSlot);
+
+    // Mark the slot as taken — still show a sealed icon (no number revealed)
+    const btn = grid.querySelector(`[data-slot="${selectedSlot}"]`);
+    btn.classList.add('taken');
+    btn.innerHTML = '🔒';
+    btn.style.borderColor = '';
+    btn.style.boxShadow   = '';
+
+    // Brief flash to confirm
+    btn.classList.add('just-claimed');
+    setTimeout(() => btn.classList.remove('just-claimed'), 600);
+
+    selectedSlot = null;
+    nameInput.value = '';
+    clearError();
+    updateProgress();
+
+    showToast(`✅ ${name} has claimed a slot!`);
+
+    if (takenSlots.size === TOTAL) {
+      setTimeout(revealResults, 900);
+    } else {
+      nameInput.focus();
+    }
+  }
+
+  // ── Progress ──────────────────────────────────────────────────────
+  function updateProgress() {
+    const n = takenSlots.size;
+    document.getElementById('progressText').textContent = `${n} / ${TOTAL}`;
+    document.getElementById('progressFill').style.width = `${(n / TOTAL) * 100}%`;
+
+    const banner = document.getElementById('waitingBanner');
+    if (n > 0 && n < TOTAL) {
+      banner.classList.add('visible');
+      document.getElementById('waitingCount').textContent = `${n} of ${TOTAL}`;
+    } else {
+      banner.classList.remove('visible');
+    }
+  }
+
+  // ── Reveal ────────────────────────────────────────────────────────
+  function revealResults() {
+    document.getElementById('mainCard').classList.add('locked');
+    document.getElementById('waitingBanner').classList.remove('visible');
+
+    // Sort by assigned number for a clean display
+    const sorted = [...entries].sort((a, b) => a.number - b.number);
+
+    const list = document.getElementById('entriesList');
+    list.innerHTML = '';
+    sorted.forEach((entry, i) => {
+      const card = document.createElement('div');
+      card.className = 'entry-card';
+      card.style.animationDelay = `${i * 0.09}s`;
+      card.innerHTML = `
+        <span class="entry-name">${escapeHTML(entry.name)}</span>
+        <span class="entry-num">${entry.number}</span>
+      `;
+      list.appendChild(card);
+    });
+
+    const section = document.getElementById('resultsSection');
+    section.classList.add('visible');
+    setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  }
+
+  // ── Reset ──────────────────────────────────────────────────────────
+  function resetAll() {
+    if (!confirm('Start a new round? All entries and numbers will be cleared.')) return;
+
+    entries      = [];
+    takenSlots   = new Set();
+    selectedSlot = null;
+    initPool();   // re-shuffle the hidden number pool
+
+    document.getElementById('nameInput').value = '';
+    document.getElementById('mainCard').classList.remove('locked');
+    document.getElementById('resultsSection').classList.remove('visible');
+    document.getElementById('entriesList').innerHTML = '';
+    clearError();
+    updateProgress();
+    buildGrid();   // rebuild fresh mystery slots
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => document.getElementById('nameInput').focus(), 400);
+  }
+
+  // ── Toast ──────────────────────────────────────────────────────────
+  let toastTimer = null;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────
+  function showError(msg) { document.getElementById('errorMsg').textContent = msg; }
+  function clearError()   { document.getElementById('errorMsg').textContent = ''; }
+
+  function escapeHTML(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  document.getElementById('nameInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addEntry();
+  });
+</script>
+
+</body>
+</html>
